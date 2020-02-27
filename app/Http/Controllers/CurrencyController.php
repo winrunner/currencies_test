@@ -43,21 +43,11 @@ class CurrencyController extends Controller
             }
         }
 
-        $datePrev = date('Y-m-d', strtotime("$date - 1 day"));
-        $datePrevLink = '?date='.$datePrev;
-        $dateNext = date('Y-m-d', strtotime("$date + 1 day"));
-        $dateNextLink = '?date='.$dateNext;
-        if($dateNext == date('Y-m-d', strtotime('now + 1 day'))) {
-            $dateNext = '';
-            $dateNextLink = '';
-        }
-
         if(!$currencies) {
             return abort(404);
         }
 
-        // return json_encode($currencies);
-        return view('list', ['currencies' => $currencies, 'title' => 'Currency', 'currentDate' => $date, 'datePrevLink' => $datePrevLink, 'datePrevTitle' => $datePrev, 'dateNextLink' => $dateNextLink, 'dateNextTitle' => $dateNext]);
+        return json_encode($currencies);
     }
 
     /**
@@ -68,6 +58,7 @@ class CurrencyController extends Controller
      */
     public function show($currencyName, Request $request)
     {
+        // check token
         $token = $request->header('Authorization');
         $token = str_replace('Bearer ', '', $token);
         if($token != 'vbPFS4vtU0312NI4PFoQt6MTQiunCpaaqIPbEwui') {
@@ -77,33 +68,24 @@ class CurrencyController extends Controller
             return abort(403);
         }
 
+        // current date
         $date = date('Y-m-d');
 
+        // convert input date
         if($request->input('date')) {
             $date = date('Y-m-d', strtotime($request->input('date')));
         }
 
         $currencies = [];
         $item = Currency::where('name', $currencyName)->where('date', $date)->orderBy('id', 'desc')->first();
+
+        // if find item
         if($item) {
-            $currencies[] = ['name' => $item->name, 'rate' => $item->rate];
+            $currencies[] = ['name' => $item->name, 'rate' => $item->rate, 'date' => $item->date];
         } else {
-            $currencies = false;
-        }
-
-        $datePrev = date('Y-m-d', strtotime("$date - 1 day"));
-        $datePrevLink = '?date='.$datePrev;
-        $dateNext = date('Y-m-d', strtotime("$date + 1 day"));
-        $dateNextLink = '?date='.$dateNext;
-        if($dateNext == date('Y-m-d', strtotime('now + 1 day'))) {
-            $dateNext = '';
-            $dateNextLink = '';
-        }
-
-        if(!$currencies) {
             return abort(404);
         }
 
-        return view('list', ['currencies' => $currencies, 'title' => 'Currency', 'currentDate' => $date, 'datePrevLink' => $datePrevLink, 'datePrevTitle' => $datePrev, 'dateNextLink' => $dateNextLink, 'dateNextTitle' => $dateNext]);
+        return json_encode($currencies);
     }
 }
